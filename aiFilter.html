@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Course Filter – Demo</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 14px;
+        background: #f4f5f7;
+        color: #1a1a2e;
+        min-height: 100vh;
+      }
+      header {
+        background: #0078d4;
+        color: #fff;
+        padding: 18px 28px;
+      }
+      header h1 {
+        font-size: 18px;
+        font-weight: 600;
+      }
+      header span {
+        font-size: 12px;
+        opacity: 0.8;
+        display: block;
+        margin-top: 2px;
+      }
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px 20px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid #dde1e7;
+        border-radius: 8px;
+        padding: 16px 18px;
+        margin-bottom: 20px;
+      }
+      .card-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 10px;
+      }
+      .pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .pill {
+        background: #e1effa;
+        color: #0058a3;
+        border: 1px solid #b3d4f0;
+        border-radius: 20px;
+        padding: 4px 13px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.15s;
+      }
+      .pill.active {
+        background: #0078d4;
+        color: #fff;
+        border-color: #0058a3;
+      }
+      textarea {
+        width: 100%;
+        height: 130px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 10px;
+        font-family: Consolas, monospace;
+        font-size: 12px;
+        resize: vertical;
+        outline: none;
+      }
+      textarea:focus {
+        border-color: #0078d4;
+      }
+      .hint {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 10px;
+      }
+      .btn-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      button {
+        padding: 8px 18px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .btn-primary {
+        background: #0078d4;
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: #005a9e;
+      }
+      .btn-secondary {
+        background: #e8eaed;
+        color: #333;
+      }
+      .btn-secondary:hover {
+        background: #d4d6da;
+      }
+      .btn-sample {
+        background: #fff;
+        color: #0078d4;
+        border: 1.5px solid #0078d4;
+      }
+      .btn-sample:hover {
+        background: #e1effa;
+      }
+      .btn-sample.on {
+        background: #0078d4;
+        color: #fff;
+      }
+      .sep {
+        font-size: 12px;
+        color: #888;
+      }
+      .stats {
+        display: flex;
+        gap: 14px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .stat-card {
+        flex: 1;
+        min-width: 130px;
+        background: #fff;
+        border: 1px solid #dde1e7;
+        border-radius: 8px;
+        padding: 14px 18px;
+        text-align: center;
+      }
+      .stat-card .val {
+        font-size: 28px;
+        font-weight: 700;
+      }
+      .stat-card .lbl {
+        font-size: 11px;
+        color: #666;
+        margin-top: 4px;
+      }
+      .total .val {
+        color: #1a1a2e;
+      }
+      .ai-card .val {
+        color: #107c10;
+      }
+      .nonai .val {
+        color: #d83b01;
+      }
+      .bar {
+        height: 6px;
+        background: #e8eaed;
+        border-radius: 3px;
+        margin-top: 6px;
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        background: #107c10;
+        border-radius: 3px;
+        transition: width 0.4s;
+      }
+      .res-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .res-header h2 {
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .tab-btns {
+        display: flex;
+        gap: 6px;
+      }
+      .tab-btn {
+        padding: 5px 14px;
+        border-radius: 20px;
+        border: 1px solid #ccc;
+        background: #fff;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .tab-btn.active {
+        background: #0078d4;
+        color: #fff;
+        border-color: #0078d4;
+      }
+      .table-wrap {
+        background: #fff;
+        border: 1px solid #dde1e7;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      thead tr {
+        background: #f0f4f8;
+      }
+      th {
+        padding: 10px 14px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: #555;
+        border-bottom: 1px solid #dde1e7;
+      }
+      td {
+        padding: 9px 14px;
+        font-size: 12px;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: top;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tr:hover td {
+        background: #f7fafd;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .badge.ai {
+        background: #dff6dd;
+        color: #107c10;
+      }
+      .badge.non-ai {
+        background: #fde7e9;
+        color: #d83b01;
+      }
+      .kw-pill {
+        display: inline-block;
+        background: #fff4cc;
+        color: #8a5c00;
+        border: 1px solid #f0d060;
+        border-radius: 3px;
+        padding: 1px 5px;
+        font-size: 11px;
+        margin: 1px 2px;
+      }
+      .empty {
+        padding: 30px;
+        text-align: center;
+        color: #888;
+      }
+      .search-box {
+        padding: 7px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 12px;
+        width: 200px;
+        outline: none;
+      }
+      .search-box:focus {
+        border-color: #0078d4;
+      }
+      .pagination {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        padding: 10px 14px;
+        border-top: 1px solid #f0f0f0;
+      }
+      .pg-btn {
+        padding: 4px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        background: #fff;
+      }
+      .pg-btn:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .pg-info {
+        font-size: 12px;
+        color: #666;
+        margin-left: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>AI Course Filter — Demo</h1>
+      <span>Extracted from Udemy.tsx · word-boundary regex matching</span>
+    </header>
+
+    <div class="container">
+      <div class="card">
+        <div class="card-title">Active keywords <span style="font-weight: 400; color: #888">(click to toggle)</span></div>
+        <div class="pills" id="pills"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Test data</div>
+        <p class="hint">
+          One entry per line. Multi-value cells like <em>"Generative AI for Tech, Machine Learning"</em> work — the filter checks the whole
+          cell string.
+        </p>
+        <textarea id="inputData" placeholder="Paste data here, or load a sample below…"></textarea>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="runFilter()">&#9654; Run filter</button>
+          <span class="sep">Load sample:</span>
+          <button class="btn-sample" id="btnCats" onclick="loadSample('categories')">Course Categories &mdash; Doc 3 (157 rows)</button>
+          <button class="btn-sample" id="btnSkills" onclick="loadSample('skills')">LinkedIn Skills &mdash; Doc 2 (41 rows)</button>
+          <button class="btn-secondary" onclick="clearAll()">Clear</button>
+        </div>
+      </div>
+
+      <div class="stats" id="stats" style="display: none">
+        <div class="stat-card total">
+          <div class="val" id="sTotal">0</div>
+          <div class="lbl">Total rows</div>
+        </div>
+        <div class="stat-card ai-card">
+          <div class="val" id="sAI">0</div>
+          <div class="lbl">AI rows</div>
+          <div class="bar"><div class="bar-fill" id="barFill" style="width: 0%"></div></div>
+        </div>
+        <div class="stat-card nonai">
+          <div class="val" id="sNon">0</div>
+          <div class="lbl">Non-AI rows</div>
+        </div>
+      </div>
+
+      <div id="results" style="display: none">
+        <div class="res-header">
+          <h2 id="tblTitle">Results</h2>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
+            <input
+              class="search-box"
+              id="search"
+              placeholder="Search…"
+              oninput="
+                currentPage = 1;
+                render();
+              "
+            />
+            <div class="tab-btns">
+              <button class="tab-btn active" id="tAll" onclick="setTab('all')">All</button>
+              <button class="tab-btn" id="tAI" onclick="setTab('ai')">AI only</button>
+              <button class="tab-btn" id="tNon" onclick="setTab('non-ai')">Non-AI only</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Entry</th>
+                <th>Match</th>
+                <th>Matched keywords</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div class="empty" id="emptyMsg" style="display: none">No rows match.</div>
+          <div class="pagination">
+            <button class="pg-btn" id="prev" onclick="changePage(-1)">&#8592; Prev</button>
+            <button class="pg-btn" id="next" onclick="changePage(1)">Next &#8594;</button>
+            <span class="pg-info" id="pgInfo"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const SAMPLES = {
+        skills: `React.js, Software Design Patterns
+Cucumber
+Kubernetes
+Artificial Intelligence (AI), Machine Learning, Supervised Learning
+LinkedIn Marketing
+Artificial Intelligence (AI), Generative AI, Large Language Models (LLM), Natural Language Processing (NLP), Transformer Models
+Git
+AI Agents, Artificial Intelligence (AI), Generative AI, OpenAI API
+AI for Business, Artificial Intelligence (AI), Business Strategy
+Artificial Intelligence (AI), Generative AI, Traditional AI
+Content Marketing, Social Media Branding
+Agile Software Development
+Software Development Life Cycle (SDLC)
+SQL Server Integration Services (SSIS)
+Amazon Web Services (AWS), Cloud Development
+Microservices
+SAP Marketing Cloud
+SAP Marketing Cloud, SAP Products
+SAP Marketing Cloud, SAP Products, Statutory Accounting Principles (SAP)
+Software Architecture
+Amazon Web Services (AWS)
+Java, Microservices, Software Design
+E-Commerce, SAP Marketing Cloud
+Navigation, SAP Marketing Cloud, SAP Products, Search
+Agile Methodologies, Agile Project Management
+Database Queries, SQL
+AI Productivity, Artificial Intelligence (AI), Productivity Improvement
+Application Security, DevSecOps, Microservices
+OWASP, Web Application Security
+React.js
+Python (Programming Language)
+Data Structures, Python (Programming Language), Software Development
+React.js, State Management
+Java
+Microservices, Node.js
+Artificial Intelligence (AI), GitHub Copilot, Microsoft Visual Studio Code
+Amazon Web Services (AWS), Cloud Administration
+Database Design, Extract, Transform, Load (ETL), SQL
+Artificial Intelligence (AI), Generative AI
+Application Architecture, Programming, Programming Foundations
+Front-End Development, React.js, Web Development`,
+        categories: `Content Marketing
+Paid Advertising
+English Language Learning
+DevOps
+Digital Marketing
+Learning & Development
+Generative AI for Business, Project Management
+Analytics
+Analytics, Strategy
+Generative AI for Business, Web Development
+Business Analysis
+Generative AI for Business
+Generative AI for Tech
+Fundamentals of Communication
+Programming Languages
+Operating Systems & Servers
+Database Design & Development
+Web Development
+Generative AI for Business, IT Certifications
+Human Resources Fundamentals
+Generative AI Tools, Generative AI for Business
+IT Certifications
+DevOps, Generative AI for Tech
+Public Speaking & Presentations
+Personal Growth
+Fundamentals of Communication, Generative AI for Business, NASBA Continuing Professional Education (CPE)
+Fundamentals of Communication, NASBA Continuing Professional Education (CPE)
+Customer Success & Customer Service
+Cloud Certifications, Generative AI for Tech, IT Certifications
+User Experience Design
+Career Success
+Big Data
+Office Productivity & Collaboration Tools
+Data Visualization
+Generative AI for Tech, Software Testing
+Generative AI for Business, Software Engineering
+Fundamentals of Communication, Generative AI for Business, Written Communication
+Software Testing
+Database Administration
+Photo & Video Editing Tools
+Offensive Security
+World Languages
+Arts & Creativity
+CompTIA Continuing Education (CE), Cybersecurity Certifications
+Health & Fitness
+Generative AI for Business, Leadership
+Generative AI for Tech, Machine Learning
+PMI Professional Development Units (PDUs), Project Management Certifications
+Project Management Certifications
+Business Analysis, Project Management
+Project Management
+Cloud Certifications, IT Certifications
+Management
+Operations Management
+Cloud Development, Generative AI for Tech
+Generative AI for Tech, Web Development
+Networking
+Product Management
+Cybersecurity Certifications
+DevOps, Generative AI for Tech, Web Development
+Project Management Tools
+Cloud Certifications
+Mobile Development, Programming Languages
+Cloud Development, Web Development
+Software Engineering
+DevOps, Software Testing
+Accounting Software
+No Code/Low Code Development
+Cloud Development
+Programming Languages, Web Development
+Machine Learning
+DevOps, Generative AI for Business, IT Certifications
+Generative AI for Tech, Software Engineering
+Business Analysis, Management
+Generative AI for Tech, No Code/Low Code Development
+Mobile Development
+Database Design & Development, Generative AI for Tech
+Agile & Scrum
+Game Design, Mobile Development
+Digital Marketing, Generative AI for Business
+Investing & Trading
+Finance, Generative AI for Business
+IT Certifications, Software Engineering
+Marketing Analytics & Automation
+Finance
+Cloud Development, Cloud Fundamentals
+Defensive Security, Generative AI for Tech
+Leadership
+Hardware
+Cloud Development, Security Awareness
+Design & Illustration Tools
+Big Data, Software Engineering
+Generative AI for Business, Marketing Strategy
+Design & Illustration Tools, Generative AI for Business
+Talent Management
+Marketing Strategy
+IT Certifications, Software Testing
+Corporate Finance, Finance
+Life Skills
+Environmental, Social & Governance (ESG)
+Web & Mobile Design
+User Experience Design, Web & Mobile Design
+Generative AI for Tech, User Experience Design
+Cloud Certifications, Cloud Development
+DevOps, IT Certifications
+Cloud Certifications, Generative AI for Tech
+Security Awareness
+Math & Statistics
+Career Success, Generative AI for Business
+DevOps, Mobile Development
+English Language Test Prep
+Generative AI for Business, Generative AI for Tech
+Content Marketing, Generative AI for Business
+Generative AI for Business, No Code/Low Code Development
+Learning & Development, Programming Languages
+Agile & Scrum, Career Success, Project Management Certifications
+Governance, Risk, and Compliance
+Generative AI for Tech, IT Certifications
+Sales Skills & Tools
+Cloud Development, IT Certifications
+Learning & Development, Software Testing
+Generative AI for Business, Search Engine Optimization
+Software Engineering, Web Development
+Game Development & Design
+Cloud Development, Database Design & Development
+Strategy
+Generative AI for Tech, Programming Languages
+Leadership, Machine Learning
+Financial Modeling & Analysis
+Social Media Marketing
+Generative AI for Business, Social Media Marketing
+Design & Illustration Tools, Hobbies
+Generative AI for Tech, Security Awareness
+Entrepreneurship
+Finance, Investing & Trading
+Generative AI for Tech, No Code/Low Code Development, Software Engineering
+Cloud Certifications, Networking
+Cloud Certifications, Cybersecurity Certifications
+Cloud Development, DevOps
+DevOps, Generative AI for Tech, Software Testing
+Generative AI for Business, Office Productivity & Collaboration Tools
+Agile & Scrum, DevOps
+Database Administration, Governance, Risk, and Compliance
+Customer Success & Customer Service, Generative AI for Business
+Cloud Development, Software Engineering
+3D & Animation Tools
+Operations Management, Programming Languages
+Operating Systems
+Written Communication
+Agile & Scrum, Project Management Certifications
+Generative AI for Business, Machine Learning
+Career Success, Generative AI for Business, NASBA Continuing Professional Education (CPE)
+Analytics, IT Certifications
+Big Data, IT Certifications
+Business Analysis, Spreadsheets
+Accounting
+Generative AI for Business, Project Management Tools`,
+      };
+
+      let KEYWORDS = [
+        "generative ai",
+        "artificial intelligence",
+        "ai",
+        "machine learning",
+        "deep learning",
+        "large language models",
+        "llm",
+        "natural language processing",
+        "nlp",
+        "neural",
+        "ai agents",
+        "agentic ai",
+        "ai automation",
+        "ai productivity",
+        "ai security",
+        "responsible ai",
+        "ai governance",
+        "ai ethics",
+        "computer vision",
+        "data science",
+      ];
+      let allRows = [],
+        activeTab = "all",
+        currentPage = 1;
+      const PAGE = 30;
+
+      function getMatches(s) {
+        const l = s.toLowerCase();
+        return KEYWORDS.filter((k) => new RegExp("\\b" + k + "\\b").test(l));
+      }
+
+      function runFilter(reset = true) {
+        const raw = document.getElementById("inputData").value.trim();
+        if (!raw) {
+          alert("Paste data or load a sample first.");
+          return;
+        }
+        const lines = raw
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean);
+        allRows = lines.map((t) => ({ text: t, kws: getMatches(t), isAI: getMatches(t).length > 0 }));
+        if (reset) {
+          currentPage = 1;
+          activeTab = "all";
+          updateTabs();
+        }
+        const ai = allRows.filter((r) => r.isAI).length;
+        const pct = allRows.length ? Math.round((ai / allRows.length) * 100) : 0;
+        document.getElementById("sTotal").textContent = allRows.length;
+        document.getElementById("sAI").textContent = ai;
+        document.getElementById("sNon").textContent = allRows.length - ai;
+        document.getElementById("barFill").style.width = pct + "%";
+        document.getElementById("stats").style.display = "flex";
+        document.getElementById("results").style.display = "block";
+        render();
+      }
+
+      function getFiltered() {
+        const q = document.getElementById("search").value.toLowerCase();
+        return allRows
+          .filter((r) => activeTab === "all" || (activeTab === "ai" ? r.isAI : !r.isAI))
+          .filter((r) => !q || r.text.toLowerCase().includes(q));
+      }
+
+      function render() {
+        const f = getFiltered();
+        const tp = Math.max(1, Math.ceil(f.length / PAGE));
+        if (currentPage > tp) currentPage = tp;
+        const sl = f.slice((currentPage - 1) * PAGE, currentPage * PAGE);
+        document.getElementById("emptyMsg").style.display = sl.length ? "none" : "block";
+        document.getElementById("tbody").innerHTML = sl
+          .map((r, i) => {
+            const n = (currentPage - 1) * PAGE + i + 1;
+            const badge = r.isAI ? `<span class="badge ai">AI</span>` : `<span class="badge non-ai">Non-AI</span>`;
+            const kws = r.kws.length
+              ? r.kws.map((k) => `<span class="kw-pill">${k}</span>`).join("")
+              : `<span style="color:#aaa">&#8212;</span>`;
+            return `<tr><td>${n}</td><td>${esc(r.text)}</td><td>${badge}</td><td>${kws}</td></tr>`;
+          })
+          .join("");
+        document.getElementById("prev").disabled = currentPage <= 1;
+        document.getElementById("next").disabled = currentPage >= tp;
+        document.getElementById("pgInfo").textContent = `Page ${currentPage}/${tp} &#183; ${f.length} rows`;
+        document.getElementById("tblTitle").textContent = `Results (${f.length} row${f.length !== 1 ? "s" : ""})`;
+      }
+
+      function changePage(d) {
+        currentPage += d;
+        render();
+      }
+      function setTab(t) {
+        activeTab = t;
+        currentPage = 1;
+        updateTabs();
+        render();
+      }
+      function updateTabs() {
+        document.getElementById("tAll").classList.toggle("active", activeTab === "all");
+        document.getElementById("tAI").classList.toggle("active", activeTab === "ai");
+        document.getElementById("tNon").classList.toggle("active", activeTab === "non-ai");
+      }
+
+      function loadSample(key) {
+        document.getElementById("inputData").value = SAMPLES[key];
+        document.getElementById("btnCats").classList.toggle("on", key === "categories");
+        document.getElementById("btnSkills").classList.toggle("on", key === "skills");
+        runFilter();
+      }
+
+      function clearAll() {
+        document.getElementById("inputData").value = "";
+        document.getElementById("stats").style.display = "none";
+        document.getElementById("results").style.display = "none";
+        document.getElementById("btnCats").classList.remove("on");
+        document.getElementById("btnSkills").classList.remove("on");
+        allRows = [];
+      }
+
+      function renderPills() {
+        const base = [
+          "generative ai",
+          "artificial intelligence",
+          "ai",
+          "machine learning",
+          "deep learning",
+          "large language models",
+          "llm",
+          "natural language processing",
+          "nlp",
+          "neural",
+          "ai agents",
+          "agentic ai",
+          "ai automation",
+          "ai productivity",
+          "ai security",
+          "responsible ai",
+          "ai governance",
+          "ai ethics",
+          "computer vision",
+          "data science",
+        ];
+        const c = document.getElementById("pills");
+        c.innerHTML = "";
+        base.forEach((kw) => {
+          const p = document.createElement("span");
+          p.className = "pill" + (KEYWORDS.includes(kw) ? " active" : "");
+          p.textContent = kw;
+          p.onclick = () => {
+            if (KEYWORDS.includes(kw)) {
+              KEYWORDS = KEYWORDS.filter((k) => k !== kw);
+              p.classList.remove("active");
+            } else {
+              KEYWORDS.push(kw);
+              p.classList.add("active");
+            }
+            if (allRows.length) runFilter(false);
+          };
+          c.appendChild(p);
+        });
+      }
+
+      function esc(s) {
+        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+
+      renderPills();
+    </script>
+  </body>
+</html>
