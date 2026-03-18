@@ -54,27 +54,39 @@
         letter-spacing: 0.5px;
         margin-bottom: 10px;
       }
-      .pills {
+      .kw-input {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 13px;
+        font-family: inherit;
+        outline: none;
+      }
+      .kw-input:focus {
+        border-color: #0078d4;
+        box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.15);
+      }
+      .kw-preview {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
+        margin-top: 10px;
+        min-height: 24px;
       }
-      .pill {
-        background: #e1effa;
-        color: #0058a3;
-        border: 1px solid #b3d4f0;
-        border-radius: 20px;
-        padding: 4px 13px;
-        font-size: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        user-select: none;
-        transition: background 0.15s;
-      }
-      .pill.active {
+      .kw-tag {
         background: #0078d4;
         color: #fff;
-        border-color: #0058a3;
+        border-radius: 20px;
+        padding: 3px 11px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .kw-count {
+        font-size: 12px;
+        color: #888;
+        align-self: center;
+        margin-left: 4px;
       }
       textarea {
         width: 100%;
@@ -323,15 +335,16 @@
 
     <div class="container">
       <div class="card">
-        <div class="card-title">Active keywords <span style="font-weight: 400; color: #888">(click to toggle)</span></div>
-        <div class="pills" id="pills"></div>
+        <div class="card-title">Filter keywords <span style="font-weight: 400; color: #888">— comma-separated, edit freely</span></div>
+        <input class="kw-input" id="kwInput" placeholder="e.g. ai, machine learning, generative ai, nlp" oninput="onKwInput()" />
+        <div class="kw-preview" id="kwPreview"></div>
       </div>
 
       <div class="card">
         <div class="card-title">Test data</div>
         <p class="hint">
-          One entry per line. Multi-value cells like <em>"Generative AI for Tech, Machine Learning"</em> work — the filter checks the whole
-          cell string.
+          Accepts a <strong>JS array</strong> like <em>["Course Category", "DevOps", "Generative AI for Tech", ...]</em> — index 0 is always
+          treated as the column header and skipped. Also accepts one entry per line.
         </p>
         <textarea id="inputData" placeholder="Paste data here, or load a sample below…"></textarea>
         <div class="btn-row">
@@ -603,7 +616,7 @@ Accounting
 Generative AI for Business, Project Management Tools`,
       };
 
-      let KEYWORDS = [
+      const DEFAULT_KEYWORDS = [
         "generative ai",
         "artificial intelligence",
         "ai",
@@ -625,14 +638,70 @@ Generative AI for Business, Project Management Tools`,
         "computer vision",
         "data science",
       ];
+
       let allRows = [],
         activeTab = "all",
         currentPage = 1;
       const PAGE = 30;
 
+      function getKeywords() {
+        const raw = document.getElementById("kwInput").value;
+        return raw
+          .split(",")
+          .map((k) => k.trim().toLowerCase())
+          .filter(Boolean);
+      }
+
+      function onKwInput() {
+        renderKwPreview();
+        if (allRows.length) runFilter(false);
+      }
+
+      function renderKwPreview() {
+        const kws = getKeywords();
+        const c = document.getElementById("kwPreview");
+        if (!kws.length) {
+          c.innerHTML = '<span style="color:#aaa;font-size:12px">No keywords — type above to add some</span>';
+          return;
+        }
+        c.innerHTML =
+          kws.map((k) => `<span class="kw-tag">${esc(k)}</span>`).join("") +
+          `<span class="kw-count">${kws.length} keyword${kws.length !== 1 ? "s" : ""}</span>`;
+      }
+
       function getMatches(s) {
         const l = s.toLowerCase();
-        return KEYWORDS.filter((k) => new RegExp("\\b" + k + "\\b").test(l));
+        return getKeywords().filter((k) => new RegExp("\\b" + k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b").test(l));
+      }
+
+      function parseInput(raw) {
+        // Array literal format: ["header", "val1", "val2", ...]
+        // index 0 is always treated as the column header and skipped
+        if (/^\s*\[/.test(raw)) {
+          try {
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr))
+              return arr
+                .slice(1)
+                .map((s) => String(s).trim())
+                .filter(Boolean);
+          } catch (e) {
+            // malformed JSON — fall through to line parser
+          }
+        }
+        // Quoted CSV format: "val1", "val2", "val3"
+        if (/^\s*"/.test(raw) && raw.includes('","')) {
+          const tokens = [];
+          const re = /"((?:[^"\\]|\\.)*)"/g;
+          let m;
+          while ((m = re.exec(raw)) !== null) tokens.push(m[1].trim());
+          return tokens.filter(Boolean);
+        }
+        // Default: one entry per line
+        return raw
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean);
       }
 
       function runFilter(reset = true) {
@@ -641,10 +710,7 @@ Generative AI for Business, Project Management Tools`,
           alert("Paste data or load a sample first.");
           return;
         }
-        const lines = raw
-          .split("\n")
-          .map((l) => l.trim())
-          .filter(Boolean);
+        const lines = parseInput(raw);
         allRows = lines.map((t) => ({ text: t, kws: getMatches(t), isAI: getMatches(t).length > 0 }));
         if (reset) {
           currentPage = 1;
@@ -723,54 +789,13 @@ Generative AI for Business, Project Management Tools`,
         allRows = [];
       }
 
-      function renderPills() {
-        const base = [
-          "generative ai",
-          "artificial intelligence",
-          "ai",
-          "machine learning",
-          "deep learning",
-          "large language models",
-          "llm",
-          "natural language processing",
-          "nlp",
-          "neural",
-          "ai agents",
-          "agentic ai",
-          "ai automation",
-          "ai productivity",
-          "ai security",
-          "responsible ai",
-          "ai governance",
-          "ai ethics",
-          "computer vision",
-          "data science",
-        ];
-        const c = document.getElementById("pills");
-        c.innerHTML = "";
-        base.forEach((kw) => {
-          const p = document.createElement("span");
-          p.className = "pill" + (KEYWORDS.includes(kw) ? " active" : "");
-          p.textContent = kw;
-          p.onclick = () => {
-            if (KEYWORDS.includes(kw)) {
-              KEYWORDS = KEYWORDS.filter((k) => k !== kw);
-              p.classList.remove("active");
-            } else {
-              KEYWORDS.push(kw);
-              p.classList.add("active");
-            }
-            if (allRows.length) runFilter(false);
-          };
-          c.appendChild(p);
-        });
-      }
-
       function esc(s) {
         return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       }
 
-      renderPills();
+      // Init — populate keyword input with defaults
+      document.getElementById("kwInput").value = DEFAULT_KEYWORDS.join(", ");
+      renderKwPreview();
     </script>
   </body>
 </html>
